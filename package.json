@@ -1,0 +1,29 @@
+{
+  "name": "xanthe-incident-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "An incident-response agent that drives a runbook on rails over MCP using Xanthe. The state machine enforces the procedure; the agent supplies judgment; the ledger is the audit trail.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "tsx src/run.ts",
+    "agent": "tsx src/run.ts --llm",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.101.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "xanthe": "github:msradam/xanthe#v0.1.1",
+    "xstate": "5.32.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

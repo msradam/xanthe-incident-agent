@@ -1,0 +1,4 @@
+node_modules/
+.xanthe/
+*.log
+.DS_Store
