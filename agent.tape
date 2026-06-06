@@ -20,5 +20,4 @@ Sleep 600ms
 Type "npm run agent"
 Sleep 400ms
 Enter
-Sleep 45s
-Sleep 1500ms
+Sleep 70s

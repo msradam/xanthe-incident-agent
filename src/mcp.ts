@@ -4,8 +4,8 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const xantheCli = join(repoRoot, "node_modules", "xanthe", "dist", "cli.js");
-const machineSpec = join(repoRoot, "machine", "incident-runbook.ts") + "#incidentRunbook";
+export const xantheCli = join(repoRoot, "node_modules", "xanthe", "dist", "cli.js");
+export const machineSpec = join(repoRoot, "machine", "incident-runbook.ts") + "#incidentRunbook";
 
 export interface ToolSpec {
   name: string;

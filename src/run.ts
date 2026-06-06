@@ -11,31 +11,26 @@ const model = process.env.MODEL ?? "claude-sonnet-4-6";
 const home = mkdtempSync(join(tmpdir(), "incident-agent-"));
 const log = (line: string) => console.log(line);
 
-const mcp = await connect(home);
-log(`incident-response agent (${mode} mode), ledger at ${home}\n`);
-
-const start = await mcp.call("state");
-const sessionId: string = start.session_id;
-
-// The runbook is the source of truth: a premature resolve is refused, not trusted to judgment.
-const premature = await mcp.call("step", { event: "resolve", payload: { resolution: "looks fine" } });
-log(`gate check: resolve before mitigating -> ${premature.outcome} (legal here: ${premature.legal.join(", ")})\n`);
-
-log("driving the runbook:");
 if (mode === "llm") {
-  await driveLLM(mcp, { model, log });
+  log("incident-response agent (Claude via the Agent SDK, using your Claude auth)\n");
+  await driveLLM(home, model, log);
 } else {
+  log("incident-response agent (offline policy driver)\n");
+  const mcp = await connect(home);
+  // The runbook is the source of truth: a premature resolve is refused, not trusted to judgment.
+  const premature = await mcp.call("step", { event: "resolve", payload: { resolution: "looks fine" } });
+  log(`gate check: resolve before mitigating -> ${premature.outcome} (legal: ${premature.legal.join(", ")})\n`);
+  log("driving the runbook:");
   await drivePolicy(mcp, log);
+  await mcp.close();
 }
 
-const final = await mcp.call("state");
-log(`\nfinal state: ${JSON.stringify(final.value)} (terminal: ${final.terminal})`);
-log("postmortem assembled by being forced through the runbook:");
-log(JSON.stringify(final.context, null, 2));
-
-await mcp.close();
-
-const entries = new FileLedgerStore(home).read(MACHINE_ID, sessionId);
-const result = verifyChain(entries, sessionId);
-log(`\nledger: ${result.ok ? "intact" : `BROKEN at seq ${result.brokenSeq}: ${result.reason}`} (${result.count} entries, including the refused gate check)`);
-log(`head: ${result.headHash}`);
+// The ledger is a tamper-evident record of the whole response, refused steps included.
+const store = new FileLedgerStore(home);
+log("");
+for (const sessionId of store.listSessions(MACHINE_ID)) {
+  const entries = store.read(MACHINE_ID, sessionId);
+  const result = verifyChain(entries, sessionId);
+  const last = entries[entries.length - 1];
+  log(`ledger: ${result.ok ? "intact" : `BROKEN at seq ${result.brokenSeq}`} (${result.count} entries) | final state: ${JSON.stringify(last?.state.value)}`);
+}
