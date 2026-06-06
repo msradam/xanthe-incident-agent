@@ -31,6 +31,9 @@ function valueOf(state: { value: unknown }): string {
   return typeof state.value === "string" ? state.value : JSON.stringify(state.value);
 }
 
+const stepDelayMs = Number(process.env.STEP_DELAY_MS) || 0;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export async function drivePolicy(mcp: Mcp, log: (line: string) => void): Promise<Beat[]> {
   const beats: Beat[] = [];
   let state = await mcp.call("state");
@@ -41,6 +44,7 @@ export async function drivePolicy(mcp: Mcp, log: (line: string) => void): Promis
       log(`no policy for '${from}' (legal: ${state.legal.join(", ")})`);
       break;
     }
+    if (stepDelayMs) await sleep(stepDelayMs);
     const result = await mcp.call("step", { event: move.event, payload: move.payload });
     const landed = typeof result.to === "string" ? result.to : JSON.stringify(result.to);
     const outcome = result.outcome === "refused" ? "REFUSED" : `-> ${landed}`;
